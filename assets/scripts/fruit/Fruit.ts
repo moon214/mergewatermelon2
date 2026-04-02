@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, CircleCollider2D, RigidBody2D, Contact2DType, IPhysics2DContact, Vec2, Sprite, SpriteFrame, Texture2D, resources } from 'cc';
+import { _decorator, Component, Node, CircleCollider2D, RigidBody2D, Contact2DType, IPhysics2DContact, Vec2, Sprite, SpriteFrame, resources } from 'cc';
 import { GameManager } from '../core/GameManager';
 import { FruitMerge } from './FruitMerge';
 
@@ -15,13 +15,15 @@ export enum FruitType {
     WATERMELON = 7,
 }
 
-export const FruitConfig: Record<FruitType, {
+export interface FruitConfigType {
     name: string;
     score: number;
     radius: number;
     color: string;
     texture: string;
-}> = {
+}
+
+export const FruitConfig: Record<FruitType, FruitConfigType> = {
     [FruitType.CHERRY]: { name: '樱桃', score: 10, radius: 25, color: '#FF6B6B', texture: 'fruits/fruit_01_cherry' },
     [FruitType.STRAWBERRY]: { name: '草莓', score: 20, radius: 32, color: '#FF8E8E', texture: 'fruits/fruit_02_strawberry' },
     [FruitType.ORANGE]: { name: '橘子', score: 40, radius: 40, color: '#FFA726', texture: 'fruits/fruit_03_orange' },
@@ -33,10 +35,9 @@ export const FruitConfig: Record<FruitType, {
 };
 
 @ccclass('Fruit')
-export class Fruit extends Component implements Contact2DType {
+export class Fruit extends Component {
     private fruitType: FruitType = FruitType.CHERRY;
     private isReleased: boolean = false;
-
     private collider: CircleCollider2D = null!;
     private rigidbody: RigidBody2D = null!;
     private sprite: Sprite = null!;
@@ -45,29 +46,22 @@ export class Fruit extends Component implements Contact2DType {
         this.collider = this.getComponent(CircleCollider2D) || this.addComponent(CircleCollider2D);
         this.rigidbody = this.getComponent(RigidBody2D) || this.addComponent(RigidBody2D);
         this.sprite = this.getComponent(Sprite) || this.addComponent(Sprite);
-
         this.rigidbody.gravityScale = 1.0;
         this.rigidbody.linearDamping = 0.5;
         this.rigidbody.angularDamping = 0.5;
-
         this.collider.restitution = 0.3;
         this.collider.friction = 0.8;
-
-        this.collider.onContactBegin = this.onContactBegin.bind(this);
     }
 
     public init(type: FruitType, isStatic: boolean = true) {
         this.fruitType = type;
         const config = FruitConfig[type];
-
         this.collider.radius = config.radius;
-
         if (isStatic) {
             this.rigidbody.type = RigidBody2D.Type.Static;
         } else {
             this.rigidbody.type = RigidBody2D.Type.Dynamic;
         }
-
         this.updateRender();
         console.log(`[Fruit] 初始化：${config.name}`);
     }
@@ -79,33 +73,11 @@ export class Fruit extends Component implements Contact2DType {
         console.log('[Fruit] 释放下落');
     }
 
-    onContactBegin(selfCollider: CircleCollider2D, otherCollider: CircleCollider2D, contact: IPhysics2DContact | null): boolean {
-        const otherFruit = otherCollider.node.getComponent(Fruit);
-        if (!otherFruit || !otherFruit.isReleased) {
-            return true;
-        }
-
-        if (otherFruit.fruitType === this.fruitType) {
-            const mergePos = this.getMergePosition(otherFruit);
-            GameManager.instance.fruitManager.getComponent(FruitMerge).merge(this, otherFruit, mergePos);
-        }
-
-        return true;
-    }
-
-    private getMergePosition(other: Fruit): Vec2 {
-        const pos1 = this.node.position;
-        const pos2 = other.node.position;
-        return new Vec2((pos1.x + pos2.x) / 2, (pos1.y + pos2.y) / 2);
-    }
-
     private updateRender() {
         const config = FruitConfig[this.fruitType];
         resources.load(config.texture, SpriteFrame, (err, spriteFrame) => {
             if (!err && spriteFrame) {
                 this.sprite.spriteFrame = spriteFrame;
-            } else {
-                console.warn(`[Fruit] 加载纹理失败：${config.texture}`);
             }
         });
     }

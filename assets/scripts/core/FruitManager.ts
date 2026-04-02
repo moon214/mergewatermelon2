@@ -1,12 +1,9 @@
-import { _decorator, Component, Node, Prefab, instantiate, Vec3, math, systemEvent, SystemEvent, EventTouch, Input } from 'cc';
+import { _decorator, Component, Node, Prefab, instantiate, Vec3, math, systemEvent, SystemEvent, EventTouch } from 'cc';
 import { GameManager } from './GameManager';
 import { Fruit, FruitType } from '../fruit/Fruit';
 
 const { ccclass, property } = _decorator;
 
-/**
- * 水果管理器
- */
 @ccclass('FruitManager')
 export class FruitManager extends Component {
     @property(Prefab)

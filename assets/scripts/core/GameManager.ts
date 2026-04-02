@@ -7,24 +7,27 @@ import { DouyinSDK } from '../platform/DouyinSDK';
 const { ccclass, property } = _decorator;
 
 /**
+ * 游戏状态枚举
+ */
+export enum GameState {
+    WAITING,
+    PLAYING,
+    PAUSED,
+    GAME_OVER
+}
+
+/**
  * 游戏全局管理器
  */
 @ccclass('GameManager')
 export class GameManager extends Component {
     public static instance: GameManager;
 
-    public enum GameState {
-        WAITING,
-        PLAYING,
-        PAUSED,
-        GAME_OVER
-    }
-
     public currentState: GameState = GameState.WAITING;
 
-    public static readonly GAME_WIDTH = 400;
-    public static readonly GAME_HEIGHT = 700;
-    public static readonly FAIL_HEIGHT = 650;
+    public static readonly GAME_WIDTH: number = 400;
+    public static readonly GAME_HEIGHT: number = 700;
+    public static readonly FAIL_HEIGHT: number = 650;
 
     @property(Prefab)
     fruitPrefab: Prefab = null!;
@@ -64,18 +67,20 @@ export class GameManager extends Component {
         this.startGame();
     }
 
+    start() {
+        this.startGame();
+    }
+
     public startGame() {
         this.currentState = GameState.PLAYING;
         this.currentScore = 0;
         this.comboCount = 0;
         this.lastMergeTime = 0;
-
         this.fruitManager.clearAllFruits();
         this.scoreManager.updateScore(0);
         this.scoreManager.updateCombo(0);
         this.fruitManager.spawnFirstFruit();
         this.audioManager.playBGM();
-
         console.log('[GameManager] 游戏开始');
     }
 
@@ -110,13 +115,10 @@ export class GameManager extends Component {
         } else {
             this.comboCount = 0;
         }
-
         const finalScore = Math.floor(baseScore * multiplier);
         this.currentScore += finalScore;
-
         this.scoreManager.updateScore(this.currentScore);
         this.scoreManager.updateCombo(this.comboCount);
-
         if (isCombo) {
             this.audioManager.playSFX('combo');
         }
