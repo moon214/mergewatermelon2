@@ -68,8 +68,8 @@ export class Fruit extends Component {
 
     public release() {
         this.isReleased = true;
+        // Cocos Creator 3.8: wake() 方法不存在，直接设置 type 即可
         this.rigidbody.type = RigidBody2D.Type.Dynamic;
-        this.rigidbody.wake();
         console.log('[Fruit] 释放下落');
     }
 
