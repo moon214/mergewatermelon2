@@ -1,0 +1,24 @@
+# Cocos Creator
+library/
+temp/
+local/
+build/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# 临时文件
+*.tmp

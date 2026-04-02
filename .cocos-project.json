@@ -1,0 +1,10 @@
+{
+  "engine": "cocos-creator-js",
+  "packages": "packages",
+  "engineVersion": "3.8.0",
+  "lastModuleVersion": "3.8.0",
+  "id": "7e9f3c2a-1b4d-4e8f-9a3c-5d6e7f8a9b0c",
+  "name": "MergeWatermelon2",
+  "isNew": false,
+  "migrateVersion": "3.8.0"
+}
