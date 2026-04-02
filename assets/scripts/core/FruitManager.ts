@@ -1,5 +1,5 @@
-import { _decorator, Component, Node, Prefab, instantiate, Vec3, math, systemEvent, SystemEvent, EventTouch } from 'cc';
-import { GameManager } from './GameManager';
+import { _decorator, Component, Node, Prefab, instantiate, Vec3, math, input, Input, EventTouch } from 'cc';
+import { GameManager, GameState } from './GameManager';
 import { Fruit, FruitType } from '../fruit/Fruit';
 
 const { ccclass, property } = _decorator;
@@ -21,15 +21,15 @@ export class FruitManager extends Component {
     ];
 
     onLoad() {
-        systemEvent.on(SystemEvent.EventType.TOUCH_START, this.onTouchStart, this);
-        systemEvent.on(SystemEvent.EventType.TOUCH_MOVE, this.onTouchMove, this);
-        systemEvent.on(SystemEvent.EventType.TOUCH_END, this.onTouchEnd, this);
+        input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
+        input.on(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        input.on(Input.EventType.TOUCH_END, this.onTouchEnd, this);
     }
 
     onDestroy() {
-        systemEvent.off(SystemEvent.EventType.TOUCH_START, this.onTouchStart, this);
-        systemEvent.off(SystemEvent.EventType.TOUCH_MOVE, this.onTouchMove, this);
-        systemEvent.off(SystemEvent.EventType.TOUCH_END, this.onTouchEnd, this);
+        input.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
+        input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
+        input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this);
     }
 
     public spawnFirstFruit() {
@@ -38,7 +38,7 @@ export class FruitManager extends Component {
     }
 
     private spawnFruit() {
-        if (GameManager.instance.currentState !== GameManager.GameState.PLAYING) {
+        if (GameManager.instance.currentState !== GameState.PLAYING) {
             return;
         }
 
@@ -58,13 +58,13 @@ export class FruitManager extends Component {
     }
 
     private onTouchStart(event: EventTouch) {
-        if (GameManager.instance.currentState !== GameManager.GameState.PLAYING) {
+        if (GameManager.instance.currentState !== GameState.PLAYING) {
             return;
         }
     }
 
     private onTouchMove(event: EventTouch) {
-        if (!this.currentFruit || GameManager.instance.currentState !== GameManager.GameState.PLAYING) {
+        if (!this.currentFruit || GameManager.instance.currentState !== GameState.PLAYING) {
             return;
         }
 
@@ -76,7 +76,7 @@ export class FruitManager extends Component {
     }
 
     private onTouchEnd(event: EventTouch) {
-        if (!this.currentFruit || GameManager.instance.currentState !== GameManager.GameState.PLAYING) {
+        if (!this.currentFruit || GameManager.instance.currentState !== GameState.PLAYING) {
             return;
         }
 
