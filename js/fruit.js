@@ -89,8 +89,16 @@ export default class Fruit {
     ctx.rotate(this.angle);
     
     if (image) {
-      // 使用图片渲染 - 统一按半径的 2 倍尺寸渲染
+      // 使用图片渲染 - 裁剪为圆形
       const size = this.radius * 2;
+      
+      // 创建圆形裁剪路径
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      
+      // 绘制图片（圆形区域内）
       ctx.drawImage(
         image,
         -this.radius,
