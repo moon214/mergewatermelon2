@@ -67,10 +67,6 @@ export class GameManager extends Component {
         this.startGame();
     }
 
-    start() {
-        this.startGame();
-    }
-
     public startGame() {
         this.currentState = GameState.PLAYING;
         this.currentScore = 0;
