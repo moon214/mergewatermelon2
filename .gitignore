@@ -1,0 +1,18 @@
+# 抖音小游戏忽略文件
+node_modules/
+.DS_Store
+*.log
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 缓存
+library/
+temp/
+local/
+
+# 构建产物
+build/
+dist/
