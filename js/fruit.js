@@ -89,16 +89,11 @@ export default class Fruit {
     ctx.rotate(this.angle);
     
     if (image) {
-      // 使用图片渲染 - 裁剪为圆形
+      // 使用图片渲染 - 按图片实际形状（不裁剪）
+      // 图片本身有白色边框和卡通轮廓，直接绘制即可
       const size = this.radius * 2;
       
-      // 创建圆形裁剪路径
-      ctx.beginPath();
-      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-      
-      // 绘制图片（圆形区域内）
+      // 直接绘制图片，保留原始形状（包括白色边框）
       ctx.drawImage(
         image,
         -this.radius,
