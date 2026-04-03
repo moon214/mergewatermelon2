@@ -1,5 +1,5 @@
 /**
- * 水果管理器
+ * 水果管理器 - 带物理引擎
  */
 
 import Fruit from './fruit.js';
@@ -17,15 +17,15 @@ export default class FruitManager {
     this.nextFruitType = 0;
     
     // 生成位置（屏幕顶部 1/5 处）
-    this.spawnY = gameHeight * 0.15;
+    this.spawnY = this.gameHeight * 0.15;
     // 移动范围（左右各留 15%）
-    this.minX = gameWidth * 0.15;
-    this.maxX = gameWidth * 0.85;
+    this.minX = this.gameWidth * 0.15;
+    this.maxX = this.gameWidth * 0.85;
     
     this.isGameOver = false;
-    this.failHeight = gameHeight * 0.85;
+    this.failHeight = this.gameHeight * 0.85;
     
-    // 生成概率（只生成前 6 级，第 7-8 级只能通过合成获得）
+    // 生成概率
     this.spawnProbabilities = [0.35, 0.25, 0.18, 0.12, 0.07, 0.03];
     
     // 标记是否正在等待生成新水果
@@ -56,7 +56,7 @@ export default class FruitManager {
     );
     
     this.waitingForNextSpawn = false;
-    console.log(`生成水果：${config.name} (下一个：${Fruit.getConfig(this.nextFruitType).name})`);
+    console.log(`生成水果：${config.name}`);
   }
 
   // 移动当前水果
@@ -96,17 +96,20 @@ export default class FruitManager {
     for (let i = this.fruits.length - 1; i >= 0; i--) {
       const fruit = this.fruits[i];
       if (!fruit.isMerged) {
-        fruit.update(deltaTime, 1500); // 重力加速度增加到 1500
+        fruit.update(deltaTime, 1125); // 重力减缓到 1125
         
         // 边界检测
         this.checkBoundaries(fruit);
       }
     }
     
+    // 检查碰撞响应（物理引擎核心）
+    this.resolveCollisions();
+    
     // 检查合成
     hasMerged = this.checkMerges();
     
-    // 检查游戏结束（只在稳定后检测）
+    // 检查游戏结束
     this.checkGameOver();
     
     return hasMerged;
@@ -119,11 +122,17 @@ export default class FruitManager {
     // 地面碰撞
     if (fruit.y > groundY) {
       fruit.y = groundY;
-      fruit.vy = -fruit.vy * 0.3; // 反弹（阻尼）
+      fruit.vy = -fruit.vy * fruit.restitution; // 反弹
+      
+      // 地面摩擦
+      fruit.vx *= fruit.friction;
+      fruit.angularVel *= 0.8;
       
       // 如果速度很小，直接停止
-      if (Math.abs(fruit.vy) < 50) {
+      if (Math.abs(fruit.vy) < 50 && Math.abs(fruit.vx) < 50) {
         fruit.vy = 0;
+        fruit.vx = 0;
+        fruit.angularVel = 0;
         fruit.isStable = true;
       }
     }
@@ -131,13 +140,48 @@ export default class FruitManager {
     // 左墙碰撞
     if (fruit.x < fruit.radius + 5) {
       fruit.x = fruit.radius + 5;
-      fruit.vx = -fruit.vx * 0.5;
+      fruit.vx = -fruit.vx * fruit.restitution;
+      fruit.angularVel += fruit.vy * 0.01; // 碰撞产生旋转
     }
     
     // 右墙碰撞
     if (fruit.x > this.gameWidth - fruit.radius - 5) {
       fruit.x = this.gameWidth - fruit.radius - 5;
-      fruit.vx = -fruit.vx * 0.5;
+      fruit.vx = -fruit.vx * fruit.restitution;
+      fruit.angularVel -= fruit.vy * 0.01;
+    }
+  }
+
+  // 检查所有水果之间的碰撞响应
+  resolveCollisions() {
+    for (let i = 0; i < this.fruits.length; i++) {
+      for (let j = i + 1; j < this.fruits.length; j++) {
+        const fruit1 = this.fruits[i];
+        const fruit2 = this.fruits[j];
+        
+        if (fruit1.isMerged || fruit2.isMerged) continue;
+        
+        const dx = fruit2.x - fruit1.x;
+        const dy = fruit2.y - fruit1.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const minDistance = fruit1.radius + fruit2.radius;
+        
+        // 检查碰撞
+        if (distance < minDistance) {
+          // 分离水果（避免重叠）
+          const overlap = minDistance - distance;
+          const nx = dx / distance;
+          const ny = dy / distance;
+          
+          fruit1.x -= overlap * 0.5 * nx;
+          fruit1.y -= overlap * 0.5 * ny;
+          fruit2.x += overlap * 0.5 * nx;
+          fruit2.y += overlap * 0.5 * ny;
+          
+          // 物理碰撞响应
+          fruit1.resolveCollision(fruit2);
+        }
+      }
     }
   }
 
@@ -152,14 +196,12 @@ export default class FruitManager {
         
         if (fruit1.isMerged || fruit2.isMerged) continue;
         
-        // 检查碰撞
         const dx = fruit2.x - fruit1.x;
         const dy = fruit2.y - fruit1.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const minDistance = fruit1.radius + fruit2.radius;
         
         if (distance < minDistance * 0.8 && fruit1.type === fruit2.type) {
-          // 可以合成（且等级小于 7）
           if (fruit1.type < 7) {
             this.mergeFruits(fruit1, fruit2, i, j);
             hasMerged = true;
@@ -175,48 +217,41 @@ export default class FruitManager {
   mergeFruits(fruit1, fruit2, idx1, idx2) {
     console.log('合成水果！');
     
-    // 标记为已合并
     fruit1.isMerged = true;
     fruit2.isMerged = true;
     
-    // 从数组移除
     this.fruits.splice(idx2, 1);
     this.fruits.splice(idx1, 1);
     
-    // 计算合成位置
     const mergeX = (fruit1.x + fruit2.x) / 2;
     const mergeY = (fruit1.y + fruit2.y) / 2;
     
-    // 生成新水果
     const newType = fruit1.type + 1;
     const newFruit = new Fruit(newType, mergeX, mergeY);
     newFruit.isReleased = true;
     this.fruits.push(newFruit);
     
-    // 加分
     const config = Fruit.getConfig(newType);
     this.score.addScore(config.score);
     
-    console.log(`合成：${Fruit.getConfig(fruit1.type).name} → ${config.name} (+${config.score}分)`);
+    console.log(`合成：${Fruit.getConfig(fruit1.type).name} → ${config.name}`);
   }
 
-  // 检查游戏结束 - 修复版
+  // 检查游戏结束
   checkGameOver() {
-    // 只检查已经稳定的水果
     const stableHighFruits = this.fruits.filter(fruit => 
       !fruit.isMerged && 
-      fruit.isStable &&  // 必须是稳定状态
-      fruit.y < this.failHeight  // 且在失败线以上
+      fruit.isStable &&
+      fruit.y < this.failHeight
     );
     
-    // 如果有 3 个或以上水果在失败线以上且稳定，游戏结束
     if (stableHighFruits.length >= 3) {
       this.isGameOver = true;
-      console.log('游戏结束！堆积过高');
+      console.log('游戏结束！');
     }
   }
 
-  // 渲染
+  // 渲染 - 按 y 坐标排序（远的先画，近的后画）
   render(ctx, images) {
     // 绘制失败线
     ctx.strokeStyle = 'rgba(255, 100, 100, 0.5)';
@@ -229,15 +264,17 @@ export default class FruitManager {
     ctx.setLineDash([]);
     ctx.lineWidth = 1;
     
-    // 渲染所有已释放的水果
-    for (const fruit of this.fruits) {
-      if (!fruit.isMerged) {
-        const image = images[fruit.type];
-        fruit.render(ctx, image);
-      }
+    // 按 y 坐标排序（y 大的在后，避免遮挡）
+    const renderList = [...this.fruits].filter(f => !f.isMerged);
+    renderList.sort((a, b) => a.y - b.y);
+    
+    // 渲染所有水果
+    for (const fruit of renderList) {
+      const image = images[fruit.type];
+      fruit.render(ctx, image);
     }
     
-    // 渲染当前水果（未释放的）
+    // 渲染当前水果
     if (this.currentFruit && !this.currentFruit.isReleased) {
       const image = images[this.currentFruit.type];
       this.currentFruit.render(ctx, image);
@@ -256,7 +293,7 @@ export default class FruitManager {
       }
     }
     
-    return 0; // 默认返回樱桃
+    return 0;
   }
 
   // 重置游戏

@@ -1,5 +1,5 @@
 /**
- * 水果类
+ * 水果类 - 带物理引擎
  */
 
 // 水果配置
@@ -16,69 +16,105 @@ const FRUIT_CONFIG = [
 
 export default class Fruit {
   constructor(type, x, y) {
-    this.type = type; // 0-7
+    this.type = type;
     this.x = x;
     this.y = y;
     this.vx = 0;
     this.vy = 0;
+    this.angle = 0;      // 旋转角度（弧度）
+    this.angularVel = 0; // 角速度
     this.isReleased = false;
     this.isMerged = false;
-    this.isStable = false; // 是否已稳定
+    this.isStable = false;
     
     const config = FRUIT_CONFIG[type];
     this.radius = config.radius;
     this.score = config.score;
     this.color = config.color;
+    
+    // 物理属性
+    this.mass = config.radius * 0.5; // 质量与半径成正比
+    this.restitution = 0.3; // 弹性系数
+    this.friction = 0.8;    // 摩擦系数
   }
 
   // 更新物理
-  update(deltaTime, gravity = 1500) {
+  update(deltaTime, gravity = 1125) {
     if (!this.isReleased) return;
     
-    // 重力加速度（增加 3 倍）
+    // 重力加速度（减缓到 1125）
     this.vy += gravity * (deltaTime / 1000);
     
     // 更新位置
     this.y += this.vy * (deltaTime / 1000);
     this.x += this.vx * (deltaTime / 1000);
     
-    // 阻尼
+    // 更新旋转
+    this.angle += this.angularVel * (deltaTime / 1000);
+    
+    // 阻尼（线性和角阻尼）
     this.vx *= 0.95;
     this.vy *= 0.95;
+    this.angularVel *= 0.9;
     
     // 检查是否稳定
-    if (Math.abs(this.vy) < 50 && Math.abs(this.vx) < 50) {
+    if (Math.abs(this.vy) < 50 && Math.abs(this.vx) < 50 && Math.abs(this.angularVel) < 0.1) {
       this.isStable = true;
     }
   }
 
+  // 施加冲击力（碰撞时）
+  applyImpulse(impulseX, impulseY, contactX, contactY) {
+    // 计算力矩
+    const dx = contactX - this.x;
+    const dy = contactY - this.y;
+    
+    // 冲量产生的角速度
+    const torque = dx * impulseY - dy * impulseX;
+    this.angularVel += torque * 0.001 / this.mass;
+    
+    // 线性冲量
+    this.vx += impulseX / this.mass;
+    this.vy += impulseY / this.mass;
+    
+    this.isStable = false;
+  }
+
   // 渲染
   render(ctx, image = null) {
+    ctx.save();
+    
+    // 移动到水果中心并旋转
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+    
     if (image) {
       // 使用图片渲染 - 统一按半径的 2 倍尺寸渲染
       const size = this.radius * 2;
       ctx.drawImage(
         image,
-        this.x - this.radius,
-        this.y - this.radius,
+        -this.radius,
+        -this.radius,
         size,
         size
       );
     } else {
       // 使用颜色渲染（备用）
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
       ctx.fillStyle = this.color;
       ctx.fill();
       ctx.closePath();
       
-      // 绘制高光
+      // 绘制高光（随旋转转动）
       ctx.beginPath();
-      ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.2, 0, Math.PI * 2);
+      ctx.arc(-this.radius * 0.3, -this.radius * 0.3, this.radius * 0.2, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
       ctx.fill();
       ctx.closePath();
     }
+    
+    ctx.restore();
   }
 
   // 检查碰撞
@@ -89,13 +125,50 @@ export default class Fruit {
     return distance < (this.radius + other.radius);
   }
 
+  // 处理碰撞响应
+  resolveCollision(other) {
+    if (!this.isReleased || !other.isReleased) return;
+    
+    const dx = other.x - this.x;
+    const dy = other.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance === 0) return; // 避免除零
+    
+    // 法向量
+    const nx = dx / distance;
+    const ny = dy / distance;
+    
+    // 相对速度
+    const dvx = this.vx - other.vx;
+    const dvy = this.vy - other.vy;
+    
+    // 法向相对速度
+    const dvn = dvx * nx + dvy * ny;
+    
+    // 只有接近时才响应
+    if (dvn > 0) return;
+    
+    // 冲量大小
+    const restitution = Math.min(this.restitution, other.restitution);
+    const impulse = -(1 + restitution) * dvn / (1 / this.mass + 1 / other.mass);
+    
+    // 应用冲量
+    const impulseX = impulse * nx;
+    const impulseY = impulse * ny;
+    
+    this.vx += impulseX / this.mass;
+    this.vy += impulseY / this.mass;
+    other.vx -= impulseX / other.mass;
+    other.vy -= impulseY / other.mass;
+    
+    // 应用旋转
+    this.applyImpulse(impulseX, impulseY, this.x + nx * this.radius, this.y + ny * this.radius);
+    other.applyImpulse(-impulseX, -impulseY, other.x - nx * other.radius, other.y - ny * other.radius);
+  }
+
   // 获取配置
   static getConfig(type) {
     return FRUIT_CONFIG[type] || FRUIT_CONFIG[0];
-  }
-
-  // 获取所有配置
-  static getAllConfig() {
-    return FRUIT_CONFIG;
   }
 }
