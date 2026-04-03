@@ -1,0 +1,31 @@
+{
+  "resolution": {
+    "designWidth": 400,
+    "designHeight": 700,
+    "fitWidth": false,
+    "fitHeight": true
+  },
+  "physics": {
+    "gravity": {
+      "x": 0,
+      "y": -9.8
+    },
+    "debug": false
+  },
+  "rendering": {
+    "pipeline": "forward",
+    "shadows": false
+  },
+  "platform": {
+    "wechat": false,
+    "douyin": true,
+    "web": true
+  },
+  "group": "default",
+  "collisionMatrix": {
+    "default": {
+      "default": true
+    }
+  },
+  "startScene": "assets/scenes/Game.scene"
+}

@@ -6,6 +6,7 @@ import Fruit from './fruit.js';
 import FruitManager from './fruitManager.js';
 import Score from './score.js';
 import Ad from './ad.js';
+import Audio from './audio.js';
 
 export default class Game {
   constructor() {
@@ -17,6 +18,7 @@ export default class Game {
     this.fruitManager = null;
     this.score = null;
     this.ad = null;
+    this.audio = null;
     
     this.isRunning = false;
     this.lastTime = 0;
@@ -37,9 +39,13 @@ export default class Game {
     console.log(`Canvas 尺寸：${this.width} x ${this.height}`);
     
     // 初始化游戏系统
+    this.audio = new Audio();
     this.score = new Score();
     this.fruitManager = new FruitManager(this.ctx, this.width, this.height, this.score);
     this.ad = new Ad();
+    
+    // 预加载音效
+    this.audio.preload();
     
     // 绑定输入事件
     this.bindEvents();
@@ -120,6 +126,7 @@ export default class Game {
       console.log('触摸结束，释放水果');
       
       this.fruitManager.releaseCurrentFruit();
+      if (this.audio) this.audio.play('drop');
     });
   }
 
@@ -135,7 +142,10 @@ export default class Game {
     this.ctx.fillRect(0, 0, this.width, this.height);
     
     // 更新和渲染游戏
-    this.fruitManager.update(deltaTime);
+    const merged = this.fruitManager.update(deltaTime);
+    if (merged && this.audio) {
+      this.audio.play('merge');
+    }
     this.fruitManager.render(this.ctx, this.fruitImages);
     this.score.render(this.ctx);
     
@@ -150,6 +160,9 @@ export default class Game {
   }
 
   gameOver() {
+    // 播放失败音效
+    if (this.audio) this.audio.play('fail');
+    
     this.isRunning = false;
     console.log('游戏结束！得分:', this.score.getScore());
     
@@ -229,14 +242,21 @@ export default class Game {
 
   pause() {
     this.isRunning = false;
+    if (this.audio) {
+      this.audio.stopBGM();
+    }
     console.log('游戏暂停');
   }
 
   destroy() {
     this.isRunning = false;
+    if (this.audio) {
+      this.audio.stopBGM();
+    }
     this.fruitManager = null;
     this.score = null;
     this.ad = null;
+    this.audio = null;
     console.log('游戏销毁');
   }
 }
