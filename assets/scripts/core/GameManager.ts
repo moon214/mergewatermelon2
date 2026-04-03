@@ -135,15 +135,24 @@ export class GameManager extends Component {
     private async saveHighestScore() {
         if (this.currentScore > this.highestScore) {
             this.highestScore = this.currentScore;
-            localStorage.setItem('highestScore', this.highestScore.toString());
+            try {
+                localStorage.setItem('highestScore', this.highestScore.toString());
+            } catch (err) {
+                console.error('[GameManager] 保存最高分到本地失败', err);
+            }
             await this.douyinSDK.saveCloudStorage('highest_score', this.highestScore.toString());
             console.log(`[GameManager] 新纪录！${this.highestScore}`);
         }
     }
 
     private loadHighestScore() {
-        const saved = localStorage.getItem('highestScore');
-        this.highestScore = saved ? parseInt(saved) : 0;
+        try {
+            const saved = localStorage.getItem('highestScore');
+            this.highestScore = saved ? parseInt(saved) : 0;
+        } catch (err) {
+            console.error('[GameManager] 加载最高分失败', err);
+            this.highestScore = 0;
+        }
         console.log(`[GameManager] 加载最高分：${this.highestScore}`);
     }
 

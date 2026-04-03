@@ -43,22 +43,31 @@ export class AdManager extends Component {
     }
 
     private loadDailyAdCount() {
-        const today = new Date().toDateString();
-        const savedDate = localStorage.getItem('adDate');
-        const savedCount = localStorage.getItem('adCount');
+        try {
+            const today = new Date().toDateString();
+            const savedDate = localStorage.getItem('adDate');
+            const savedCount = localStorage.getItem('adCount');
 
-        if (savedDate !== today) {
+            if (savedDate !== today) {
+                this.dailyAdCount = 0;
+                localStorage.setItem('adDate', today);
+                localStorage.setItem('adCount', '0');
+            } else if (savedCount) {
+                this.dailyAdCount = parseInt(savedCount);
+            }
+        } catch (err) {
+            console.error('[AdManager] 加载广告计数失败', err);
             this.dailyAdCount = 0;
-            localStorage.setItem('adDate', today);
-            localStorage.setItem('adCount', '0');
-        } else if (savedCount) {
-            this.dailyAdCount = parseInt(savedCount);
         }
     }
 
     private incrementAdCount() {
         this.dailyAdCount++;
-        localStorage.setItem('adCount', this.dailyAdCount.toString());
+        try {
+            localStorage.setItem('adCount', this.dailyAdCount.toString());
+        } catch (err) {
+            console.error('[AdManager] 保存广告计数失败', err);
+        }
     }
 
     private canShowAd(): boolean {

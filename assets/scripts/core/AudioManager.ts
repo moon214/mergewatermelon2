@@ -34,7 +34,9 @@ export class AudioManager extends Component {
 
     public playBGM() {
         if (this.bgmClip && !this.isBGMPlaying) {
-            this.bgmSource.clip = this.bgmClip;
+            if (this.bgmSource.clip !== this.bgmClip) {
+                this.bgmSource.clip = this.bgmClip;
+            }
             this.bgmSource.play();
             this.isBGMPlaying = true;
             console.log('[AudioManager] 播放 BGM');
@@ -68,7 +70,7 @@ export class AudioManager extends Component {
         }
 
         if (clip) {
-            this.sfxSource.playOneShot(clip);
+            this.sfxSource.playOneShot(clip, 1.0);
             console.log(`[AudioManager] 播放音效：${type}`);
         }
     }

@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, Button, Sprite } from 'cc';
+import { _decorator, Component, Node, Label, Button, Sprite, EventHandler } from 'cc';
 import { PropType, PropConfig } from './PropManager';
 import { GameManager } from '../core/GameManager';
 
@@ -88,8 +88,7 @@ export class PropItem extends Component {
     }
 
     private createClickEvent(handler: string) {
-        // @ts-ignore
-        const event = new Component.EventHandler();
+        const event = new EventHandler();
         event.target = this.node;
         event.component = 'PropItem';
         event.handler = handler;

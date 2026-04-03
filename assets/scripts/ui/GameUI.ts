@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, Button, UITransform, instantiate, Prefab, Vec3 } from 'cc';
+import { _decorator, Component, Node, Label, Button, UITransform, instantiate, Prefab, Vec3, EventHandler } from 'cc';
 import { GameManager } from '../core/GameManager';
 import { DouyinSDK } from '../platform/DouyinSDK';
 
@@ -230,8 +230,7 @@ export class GameUI extends Component {
     }
 
     private createClickEvent(handler: string) {
-        // @ts-ignore - Cocos 内部类型
-        const event = new Component.EventHandler();
+        const event = new EventHandler();
         event.target = this.node;
         event.component = 'GameUI';
         event.handler = handler;

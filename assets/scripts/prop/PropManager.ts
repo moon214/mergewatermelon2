@@ -65,16 +65,25 @@ export class PropManager extends Component {
     }
 
     private loadInventory() {
-        const saved = localStorage.getItem('propInventory');
-        if (saved) {
-            const data = JSON.parse(saved);
-            this.propInventory = new Map(Object.entries(data).map(([k, v]) => [parseInt(k) as PropType, v]));
+        try {
+            const saved = localStorage.getItem('propInventory');
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.propInventory = new Map(Object.entries(data).map(([k, v]) => [parseInt(k) as PropType, v]));
+            }
+        } catch (err) {
+            console.error('[PropManager] 加载道具库存失败', err);
+            this.initInventory();
         }
     }
 
     private saveInventory() {
-        const data = Object.fromEntries(this.propInventory);
-        localStorage.setItem('propInventory', JSON.stringify(data));
+        try {
+            const data = Object.fromEntries(this.propInventory);
+            localStorage.setItem('propInventory', JSON.stringify(data));
+        } catch (err) {
+            console.error('[PropManager] 保存道具库存失败', err);
+        }
     }
 
     public async useProp(type: PropType, target?: any): Promise<boolean> {

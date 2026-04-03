@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Label, Button, Sprite } from 'cc';
+import { _decorator, Component, Node, Label, Button, Sprite, EventHandler } from 'cc';
 import { GameManager } from '../core/GameManager';
 import { DouyinSDK } from '../platform/DouyinSDK';
 
@@ -101,8 +101,7 @@ export class ResultUI extends Component {
     }
 
     private createClickEvent(handler: string) {
-        // @ts-ignore
-        const event = new Component.EventHandler();
+        const event = new EventHandler();
         event.target = this.node;
         event.component = 'ResultUI';
         event.handler = handler;

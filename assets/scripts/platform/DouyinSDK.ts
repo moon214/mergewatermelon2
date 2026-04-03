@@ -14,7 +14,8 @@ export class DouyinSDK extends Component {
             return;
         }
 
-        const isDouyin = sys.platform === sys.DOUYIN_MINI_GAME;
+        // Cocos Creator 3.x: 使用 sys.Platform 枚举
+        const isDouyin = sys.platform === sys.Platform.DOUYIN_MINI_GAME;
         console.log(`[DouyinSDK] 初始化 - 抖音环境：${isDouyin}`);
         this.isInitialized = true;
     }

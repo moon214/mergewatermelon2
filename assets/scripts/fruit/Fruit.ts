@@ -73,13 +73,16 @@ export class Fruit extends Component {
         console.log('[Fruit] 释放下落');
     }
 
-    private updateRender() {
+    private async updateRender() {
         const config = FruitConfig[this.fruitType];
-        resources.load(config.texture, SpriteFrame, (err, spriteFrame) => {
-            if (!err && spriteFrame) {
+        try {
+            const spriteFrame = await resources.load<SpriteFrame>(config.texture, SpriteFrame);
+            if (spriteFrame) {
                 this.sprite.spriteFrame = spriteFrame;
             }
-        });
+        } catch (err) {
+            console.error(`[Fruit] 加载纹理失败：${config.texture}`, err);
+        }
     }
 
     public checkFail(): boolean {
