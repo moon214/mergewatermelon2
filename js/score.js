@@ -89,13 +89,4 @@ export default class Score {
       ctx.fillText(`${this.comboCount}连击!`, width - 20, 120);
     }
   }
-    
-    // 连击提示
-    if (this.comboCount >= 2) {
-      ctx.fillStyle = '#FF6B6B';
-      ctx.font = 'bold 36px Arial';
-      ctx.textAlign = 'right';
-      ctx.fillText(`${this.comboCount}连击!`, width - 20, 45);
-    }
-  }
 }
