@@ -23,6 +23,7 @@ export default class Fruit {
     this.vy = 0;
     this.isReleased = false;
     this.isMerged = false;
+    this.isStable = false; // 是否已稳定
     
     const config = FRUIT_CONFIG[type];
     this.radius = config.radius;
@@ -31,10 +32,10 @@ export default class Fruit {
   }
 
   // 更新物理
-  update(deltaTime, gravity = 500) {
+  update(deltaTime, gravity = 1500) {
     if (!this.isReleased) return;
     
-    // 重力加速度
+    // 重力加速度（增加 3 倍）
     this.vy += gravity * (deltaTime / 1000);
     
     // 更新位置
@@ -42,14 +43,19 @@ export default class Fruit {
     this.x += this.vx * (deltaTime / 1000);
     
     // 阻尼
-    this.vx *= 0.98;
-    this.vy *= 0.98;
+    this.vx *= 0.95;
+    this.vy *= 0.95;
+    
+    // 检查是否稳定
+    if (Math.abs(this.vy) < 50 && Math.abs(this.vx) < 50) {
+      this.isStable = true;
+    }
   }
 
   // 渲染
   render(ctx, image = null) {
     if (image) {
-      // 使用图片渲染
+      // 使用图片渲染 - 统一按半径的 2 倍尺寸渲染
       const size = this.radius * 2;
       ctx.drawImage(
         image,

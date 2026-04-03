@@ -17,7 +17,7 @@ export default class FruitManager {
     this.nextFruitType = 0;
     
     // 生成位置（屏幕顶部 1/5 处）
-    this.spawnY = gameHeight * 0.2;
+    this.spawnY = gameHeight * 0.15;
     // 移动范围（左右各留 15%）
     this.minX = gameWidth * 0.15;
     this.maxX = gameWidth * 0.85;
@@ -96,23 +96,17 @@ export default class FruitManager {
     for (let i = this.fruits.length - 1; i >= 0; i--) {
       const fruit = this.fruits[i];
       if (!fruit.isMerged) {
-        fruit.update(deltaTime);
+        fruit.update(deltaTime, 1500); // 重力加速度增加到 1500
         
         // 边界检测
         this.checkBoundaries(fruit);
-        
-        // 检查是否稳定（速度接近 0）
-        if (fruit.isReleased && Math.abs(fruit.vy) < 10 && Math.abs(fruit.vx) < 10) {
-          fruit.vy = 0;
-          fruit.vx = 0;
-        }
       }
     }
     
     // 检查合成
     hasMerged = this.checkMerges();
     
-    // 检查游戏结束
+    // 检查游戏结束（只在稳定后检测）
     this.checkGameOver();
     
     return hasMerged;
@@ -130,6 +124,7 @@ export default class FruitManager {
       // 如果速度很小，直接停止
       if (Math.abs(fruit.vy) < 50) {
         fruit.vy = 0;
+        fruit.isStable = true;
       }
     }
     
@@ -205,22 +200,19 @@ export default class FruitManager {
     console.log(`合成：${Fruit.getConfig(fruit1.type).name} → ${config.name} (+${config.score}分)`);
   }
 
-  // 检查游戏结束
+  // 检查游戏结束 - 修复版
   checkGameOver() {
-    // 检查是否有水果堆积过高（超过失败线且稳定）
-    for (const fruit of this.fruits) {
-      if (!fruit.isMerged && fruit.y < this.failHeight && Math.abs(fruit.vy) < 10) {
-        // 再检查是否有其他水果也在危险区域
-        const highFruits = this.fruits.filter(f => 
-          !f.isMerged && f.y < this.failHeight && Math.abs(f.vy) < 10
-        );
-        
-        if (highFruits.length >= 3) {
-          this.isGameOver = true;
-          console.log('游戏结束！堆积过高');
-          break;
-        }
-      }
+    // 只检查已经稳定的水果
+    const stableHighFruits = this.fruits.filter(fruit => 
+      !fruit.isMerged && 
+      fruit.isStable &&  // 必须是稳定状态
+      fruit.y < this.failHeight  // 且在失败线以上
+    );
+    
+    // 如果有 3 个或以上水果在失败线以上且稳定，游戏结束
+    if (stableHighFruits.length >= 3) {
+      this.isGameOver = true;
+      console.log('游戏结束！堆积过高');
     }
   }
 
