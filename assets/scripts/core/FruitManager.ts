@@ -15,6 +15,8 @@ export class FruitManager extends Component {
 
     private spawnY: number = 600;
     private moveRange: number = 180;
+    private touchStartX: number = 0;
+    private isTouching: boolean = false;
 
     private spawnProbabilities: number[] = [
         0.35, 0.25, 0.18, 0.12, 0.07, 0.03,
@@ -58,19 +60,26 @@ export class FruitManager extends Component {
     }
 
     private onTouchStart(event: EventTouch) {
-        if (GameManager.instance.currentState !== GameState.PLAYING) {
+        if (GameManager.instance.currentState !== GameState.PLAYING || !this.currentFruit) {
             return;
         }
+        
+        const touchLoc = event.getUILocation();
+        this.touchStartX = touchLoc.x;
+        this.isTouching = true;
+        
+        const currentPos = this.currentFruit.position;
+        this.touchStartX = currentPos.x - (touchLoc.x - currentPos.x);
     }
 
     private onTouchMove(event: EventTouch) {
-        if (!this.currentFruit || GameManager.instance.currentState !== GameState.PLAYING) {
+        if (!this.currentFruit || GameManager.instance.currentState !== GameState.PLAYING || !this.isTouching) {
             return;
         }
 
-        const delta = event.getDeltaX();
+        const touchLoc = event.getUILocation();
         const currentPos = this.currentFruit.position;
-        let newX = currentPos.x + delta;
+        let newX = touchLoc.x;
         newX = math.clamp(newX, -this.moveRange, this.moveRange);
         this.currentFruit.setPosition(newX, currentPos.y, currentPos.z);
     }
@@ -79,6 +88,8 @@ export class FruitManager extends Component {
         if (!this.currentFruit || GameManager.instance.currentState !== GameState.PLAYING) {
             return;
         }
+        
+        this.isTouching = false;
 
         GameManager.instance.audioManager.playSFX('drop');
 
