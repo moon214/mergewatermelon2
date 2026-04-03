@@ -41,11 +41,15 @@ export default class Audio {
     if (this.isMuted) return;
     
     const audio = this.sfx[name];
-    if (audio) {
-      // 停止当前播放（如果有）
-      audio.stop();
-      audio.seek(0);
-      audio.play();
+    if (audio && audio.src) {
+      try {
+        // 停止当前播放
+        audio.stop();
+        audio.seek(0);
+        audio.play();
+      } catch (err) {
+        console.warn(`音效播放失败：${name}`, err);
+      }
     }
   }
 
