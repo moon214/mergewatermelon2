@@ -1,17 +1,73 @@
 /**
- * 水果类 - 2D 增强版（带 3D 视觉效果）
+ * 水果类 - Canvas 绘制版（无白色背景）
  */
 
-// 水果配置
+// 水果配置 - 使用 Canvas 绘制颜色，不用图片
 const FRUIT_CONFIG = [
-  { name: '樱桃', score: 10, radius: 25, color: '#FF6B6B', gradient: ['#FF8E8E', '#FF6B6B', '#CC5555'] },
-  { name: '草莓', score: 20, radius: 32, color: '#FF8E8E', gradient: ['#FFB5B5', '#FF8E8E', '#CC7272'] },
-  { name: '橘子', score: 40, radius: 40, color: '#FFA726', gradient: ['#FFCC80', '#FFA726', '#CC841F'] },
-  { name: '柠檬', score: 80, radius: 50, color: '#FFD54F', gradient: ['#FFF176', '#FFD54F', '#CCA93F'] },
-  { name: '猕猴桃', score: 160, radius: 62, color: '#8BC34A', gradient: ['#AED581', '#8BC34A', '#6F9E3B'] },
-  { name: '西红柿', score: 320, radius: 75, color: '#E53935', gradient: ['#E57373', '#E53935', '#B72D2B'] },
-  { name: '桃子', score: 640, radius: 90, color: '#F48FB1', gradient: ['#F8BBD9', '#F48FB1', '#C3728E'] },
-  { name: '西瓜', score: 1280, radius: 110, color: '#2E7D32', gradient: ['#66BB6A', '#2E7D32', '#256628'] },
+  { 
+    name: '樱桃', 
+    score: 10, 
+    radius: 25, 
+    color: '#FF6B6B',
+    gradient: ['#FF8E8E', '#FF6B6B', '#CC5555'],
+    features: { stem: true, leaf: true } // 有茎和叶子
+  },
+  { 
+    name: '草莓', 
+    score: 20, 
+    radius: 32, 
+    color: '#FF8E8E',
+    gradient: ['#FFB5B5', '#FF8E8E', '#CC7272'],
+    features: { seeds: true, leaf: true } // 有籽和叶子
+  },
+  { 
+    name: '橘子', 
+    score: 40, 
+    radius: 40, 
+    color: '#FFA726',
+    gradient: ['#FFCC80', '#FFA726', '#CC841F'],
+    features: { segments: true } // 有瓣
+  },
+  { 
+    name: '柠檬', 
+    score: 80, 
+    radius: 50, 
+    color: '#FFD54F',
+    gradient: ['#FFF176', '#FFD54F', '#CCA93F'],
+    features: { oval: true } // 椭圆形
+  },
+  { 
+    name: '猕猴桃', 
+    score: 160, 
+    radius: 62, 
+    color: '#8BC34A',
+    gradient: ['#AED581', '#8BC34A', '#6F9E3B'],
+    features: { seeds: true, brown: true } // 有籽，棕色
+  },
+  { 
+    name: '西红柿', 
+    score: 320, 
+    radius: 75, 
+    color: '#E53935',
+    gradient: ['#E57373', '#E53935', '#B72D2B'],
+    features: { smooth: true } // 光滑
+  },
+  { 
+    name: '桃子', 
+    score: 640, 
+    radius: 90, 
+    color: '#F48FB1',
+    gradient: ['#F8BBD9', '#F48FB1', '#C3728E'],
+    features: { pink: true, point: true } // 粉色，尖头
+  },
+  { 
+    name: '西瓜', 
+    score: 1280, 
+    radius: 110, 
+    color: '#2E7D32',
+    gradient: ['#66BB6A', '#2E7D32', '#256628'],
+    features: { stripes: true, seeds: true } // 有条纹和籽
+  },
 ];
 
 export default class Fruit {
@@ -37,10 +93,11 @@ export default class Fruit {
     this.score = config.score;
     this.color = config.color;
     this.gradient = config.gradient;
+    this.features = config.features;
     
     // 物理属性
     this.mass = config.radius * 0.5;
-    this.restitution = 0.3;
+    this.restitution = 0.4; // 增加弹性
     this.friction = 0.8;
   }
 
@@ -58,12 +115,12 @@ export default class Fruit {
     // 旋转
     this.angle += this.angularVel * (deltaTime / 1000);
     
-    // 阻尼（增加旋转阻尼，防止一直转）
+    // 阻尼
     this.vx *= 0.95;
     this.vy *= 0.95;
-    this.angularVel *= 0.85; // 从 0.9 增加到 0.85，更快停止旋转
+    this.angularVel *= 0.85;
     
-    // 挤压变形恢复（更慢，更明显）
+    // 挤压变形恢复
     if (this.isSquashing) {
       this.scaleX += (1 - this.scaleX) * 0.08;
       this.scaleY += (1 - this.scaleY) * 0.08;
@@ -81,7 +138,7 @@ export default class Fruit {
     }
   }
 
-  // 挤压效果（碰撞时触发）
+  // 挤压效果
   squash(amount) {
     this.isSquashing = true;
     this.scaleX = 1 + amount;
@@ -98,15 +155,15 @@ export default class Fruit {
     this.vy += impulseY / this.mass;
     this.isStable = false;
     
-    // 撞击时触发挤压（更明显）
+    // 撞击时触发挤压（更敏感）
     const impact = Math.sqrt(impulseX * impulseX + impulseY * impulseY);
-    if (impact > 50) {
-      this.squash(Math.min(impact / 300, 0.5)); // 最大挤压 50%
+    if (impact > 30) { // 降低阈值
+      this.squash(Math.min(impact / 250, 0.5));
     }
   }
 
-  // 渲染 - 2D 增强版（带 3D 效果）
-  render(ctx, image = null) {
+  // 渲染 - Canvas 绘制（无白色背景）
+  render(ctx) {
     ctx.save();
     
     // 移动到水果中心
@@ -116,47 +173,35 @@ export default class Fruit {
     // 应用挤压变形
     ctx.scale(this.scaleX, this.scaleY);
     
-    if (image) {
-      // 使用图片渲染 - 直接显示原图（不裁剪，保留卡通风格）
-      const size = this.radius * 2;
-      
-      // 直接绘制图片（图片本身是圆形卡通风格）
-      ctx.drawImage(image, -this.radius, -this.radius, size, size);
-    } else {
-      // 使用渐变渲染（3D 效果）
-      const gradient = ctx.createRadialGradient(
-        -this.radius * 0.3, -this.radius * 0.3, 0,
-        0, 0, this.radius
-      );
-      gradient.addColorStop(0, this.gradient[0]);
-      gradient.addColorStop(0.5, this.gradient[1]);
-      gradient.addColorStop(1, this.gradient[2]);
-      
-      ctx.beginPath();
-      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-      ctx.fillStyle = gradient;
-      ctx.fill();
-      ctx.closePath();
-      
-      // 高光（增强 3D 感）
-      ctx.beginPath();
-      ctx.arc(-this.radius * 0.3, -this.radius * 0.3, this.radius * 0.25, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.fill();
-      ctx.closePath();
-      
-      // 边缘阴影（增强立体感）
-      ctx.beginPath();
-      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.closePath();
-    }
+    // 绘制水果主体（径向渐变）
+    const gradient = ctx.createRadialGradient(
+      -this.radius * 0.3, -this.radius * 0.3, 0,
+      0, 0, this.radius
+    );
+    gradient.addColorStop(0, this.gradient[0]);
+    gradient.addColorStop(0.5, this.gradient[1]);
+    gradient.addColorStop(1, this.gradient[2]);
+    
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.closePath();
+    
+    // 绘制水果特征
+    this.drawFeatures(ctx);
+    
+    // 边缘阴影
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.closePath();
     
     ctx.restore();
     
-    // 绘制阴影（在地面上）
+    // 绘制地面阴影
     if (this.isReleased && !this.isMerged) {
       const shadowY = ctx.canvas.height - 10;
       const distanceToGround = shadowY - this.y;
@@ -172,6 +217,99 @@ export default class Fruit {
         ctx.fill();
         ctx.closePath();
         ctx.restore();
+      }
+    }
+  }
+
+  // 绘制水果特征
+  drawFeatures(ctx) {
+    const r = this.radius;
+    
+    // 樱桃：茎和叶子
+    if (this.features.stem) {
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.8);
+      ctx.quadraticCurveTo(r * 0.3, -r * 1.2, r * 0.5, -r * 1.3);
+      ctx.strokeStyle = '#4CAF50';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      
+      // 叶子
+      ctx.beginPath();
+      ctx.ellipse(r * 0.5, -r * 1.3, r * 0.15, r * 0.08, Math.PI / 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#4CAF50';
+      ctx.fill();
+    }
+    
+    // 草莓：籽
+    if (this.features.seeds && !this.features.brown) {
+      ctx.fillStyle = '#FFEB3B';
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const x = Math.cos(angle) * r * 0.6;
+        const y = Math.sin(angle) * r * 0.6;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // 猕猴桃：棕色外皮 + 籽
+    if (this.features.brown) {
+      // 棕色外圈
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.95, 0, Math.PI * 2);
+      ctx.fillStyle = '#8D6E63';
+      ctx.fill();
+      
+      // 黑色籽
+      ctx.fillStyle = '#3E2723';
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const dist = r * 0.5;
+        const x = Math.cos(angle) * dist;
+        const y = Math.sin(angle) * dist;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.04, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // 西瓜：条纹
+    if (this.features.stripes) {
+      ctx.strokeStyle = '#1B5E20';
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 5; i++) {
+        const x = -r * 0.6 + i * r * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(x, -r * 0.8);
+        ctx.lineTo(x + r * 0.1, r * 0.8);
+        ctx.stroke();
+      }
+      
+      // 黑色籽
+      ctx.fillStyle = '#212121';
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const dist = r * 0.6;
+        const x = Math.cos(angle) * dist;
+        const y = Math.sin(angle) * dist;
+        ctx.beginPath();
+        ctx.ellipse(x, y, r * 0.06, r * 0.04, angle, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // 橘子：瓣
+    if (this.features.segments) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(angle) * r * 0.9, Math.sin(angle) * r * 0.9);
+        ctx.stroke();
       }
     }
   }

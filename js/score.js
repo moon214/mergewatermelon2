@@ -70,15 +70,25 @@ export default class Score {
   render(ctx) {
     const width = ctx.canvas.width;
     
-    // 当前分数（向下移动，避开灵动岛）
+    // 当前分数（更靠下，便于查看）
     ctx.fillStyle = '#333333';
-    ctx.font = 'bold 28px Arial';
+    ctx.font = 'bold 32px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText(`得分：${this.currentScore}`, 20, 70);
+    ctx.fillText(`得分：${this.currentScore}`, 20, 120);
     
     // 最高分
     ctx.textAlign = 'center';
-    ctx.fillText(`最高：${this.highestScore}`, width / 2, 70);
+    ctx.font = 'bold 28px Arial';
+    ctx.fillText(`最高：${this.highestScore}`, width / 2, 120);
+    
+    // 连击提示（醒目位置）
+    if (this.comboCount >= 2) {
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 36px Arial';
+      ctx.fillStyle = '#FF6B6B';
+      ctx.fillText(`${this.comboCount}连击!`, width - 20, 120);
+    }
+  }
     
     // 连击提示
     if (this.comboCount >= 2) {

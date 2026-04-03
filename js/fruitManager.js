@@ -201,8 +201,8 @@ export default class FruitManager {
         const distance = Math.sqrt(dx * dx + dy * dy);
         const minDistance = fruit1.radius + fruit2.radius;
         
-        // 距离小于半径和的 98% 且类型相同则合成（轻微挤压即可）
-        if (distance < minDistance * 0.98 && fruit1.type === fruit2.type) {
+        // 任何区域碰撞都能挤压，轻微接触即可合成
+        if (distance < minDistance * 0.99 && fruit1.type === fruit2.type) {
           if (fruit1.type < 7) {
             this.mergeFruits(fruit1, fruit2, i, j);
             hasMerged = true;
