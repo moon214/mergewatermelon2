@@ -58,17 +58,16 @@ export default class Fruit {
     // 旋转
     this.angle += this.angularVel * (deltaTime / 1000);
     
-    // 阻尼
+    // 阻尼（增加旋转阻尼，防止一直转）
     this.vx *= 0.95;
     this.vy *= 0.95;
-    this.angularVel *= 0.9;
+    this.angularVel *= 0.85; // 从 0.9 增加到 0.85，更快停止旋转
     
-    // 挤压变形恢复
+    // 挤压变形恢复（更慢，更明显）
     if (this.isSquashing) {
-      this.scaleX += (1 - this.scaleX) * 0.1;
-      this.scaleY += (1 - this.scaleY) * 0.1;
+      this.scaleX += (1 - this.scaleX) * 0.08;
+      this.scaleY += (1 - this.scaleY) * 0.08;
       
-      // 接近 1 时停止
       if (Math.abs(this.scaleX - 1) < 0.01 && Math.abs(this.scaleY - 1) < 0.01) {
         this.scaleX = 1;
         this.scaleY = 1;
@@ -99,10 +98,10 @@ export default class Fruit {
     this.vy += impulseY / this.mass;
     this.isStable = false;
     
-    // 撞击时触发挤压
+    // 撞击时触发挤压（更明显）
     const impact = Math.sqrt(impulseX * impulseX + impulseY * impulseY);
-    if (impact > 100) {
-      this.squash(Math.min(impact / 500, 0.3));
+    if (impact > 50) {
+      this.squash(Math.min(impact / 300, 0.5)); // 最大挤压 50%
     }
   }
 
@@ -118,16 +117,10 @@ export default class Fruit {
     ctx.scale(this.scaleX, this.scaleY);
     
     if (image) {
-      // 使用图片渲染 - 圆形裁剪
+      // 使用图片渲染 - 直接显示原图（不裁剪，保留卡通风格）
       const size = this.radius * 2;
       
-      // 创建圆形裁剪路径
-      ctx.beginPath();
-      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-      
-      // 绘制图片
+      // 直接绘制图片（图片本身是圆形卡通风格）
       ctx.drawImage(image, -this.radius, -this.radius, size, size);
     } else {
       // 使用渐变渲染（3D 效果）

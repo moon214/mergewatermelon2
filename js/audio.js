@@ -24,12 +24,23 @@ export default class Audio {
 
     for (const [name, path] of Object.entries(sfxList)) {
       try {
-        this.sfx[name] = tt.createInnerAudioContext();
-        this.sfx[name].src = path;
-        this.sfx[name].volume = this.sfxVolume;
-        console.log(`音效加载：${name}`);
+        const audio = tt.createInnerAudioContext();
+        audio.src = path;
+        audio.volume = this.sfxVolume;
+        audio.obeyMuteSwitch = false; // 不受静音开关影响
+        
+        // 监听加载完成
+        audio.onCanplay(() => {
+          console.log(`音效加载成功：${name}`);
+        });
+        
+        audio.onError((err) => {
+          console.warn(`音效加载失败：${name}`, err);
+        });
+        
+        this.sfx[name] = audio;
       } catch (err) {
-        console.warn(`音效加载失败：${name}`, err);
+        console.warn(`音效初始化失败：${name}`, err);
       }
     }
 
