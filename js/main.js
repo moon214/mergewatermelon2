@@ -95,32 +95,34 @@ export default class Game {
   bindEvents() {
     let isTouching = false;
     let touchStartX = 0;
+    let lastTouchX = 0;
     
     // 触摸开始
     tt.onTouchStart((e) => {
-      if (!this.isRunning) return;
+      if (!this.isRunning || this.fruitManager.isGameOver) return;
       
       const touch = e.touches[0];
       isTouching = true;
       touchStartX = touch.clientX;
+      lastTouchX = touch.clientX;
       
-      console.log('触摸开始:', touchStartX);
+      console.log('触摸开始:', touch.clientX);
     });
     
     // 触摸移动
     tt.onTouchMove((e) => {
-      if (!this.isRunning || !isTouching) return;
+      if (!this.isRunning || !isTouching || this.fruitManager.isGameOver) return;
       
       const touch = e.touches[0];
-      const deltaX = touch.clientX - touchStartX;
+      const deltaX = touch.clientX - lastTouchX;
       
       this.fruitManager.moveCurrentFruit(deltaX);
-      touchStartX = touch.clientX;
+      lastTouchX = touch.clientX;
     });
     
     // 触摸结束
     tt.onTouchEnd((e) => {
-      if (!this.isRunning || !isTouching) return;
+      if (!this.isRunning || !isTouching || this.fruitManager.isGameOver) return;
       
       isTouching = false;
       console.log('触摸结束，释放水果');
